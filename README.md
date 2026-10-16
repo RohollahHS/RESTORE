@@ -13,9 +13,9 @@
 - [Dataset](#dataset)
 - [Evaluation](#evaluation)
 - [Implementation](#implementation)
+- [Qwen2.5-VL](#qwen25-vl)
 - [Acknowledgement](#acknowledgement)
 - [Citation](#citation)
-- [TODO](#todo)
 - [License](#license)
 
 ## Installation
@@ -112,6 +112,10 @@ Available benchmark scripts: `gqa.sh`, `vqav2.sh`, `seed.sh`, `mmbench.sh`, `mme
 
 The baselines are organized in a modular form, so a new baseline reduction method can be added easily. Additional contributions are welcome!
 
+## Qwen2.5-VL
+
+RESTORE for Qwen2.5-VL-7B-Instruct is provided in [`qwen25vl`](qwen25vl) with its own environment. Please see [`qwen25vl/README.md`](qwen25vl/README.md) for installation, evaluation, and results.
+
 ## Acknowledgement
 
 This repository is built on top of [LLaVA](https://github.com/haotian-liu/LLaVA/tree/main). It also makes use of code from [DivPrune](https://github.com/vbdi/divprune), [VisPruner](https://github.com/Theia-4869/VisPruner), and [HoloV](https://github.com/obananas/HoloV). We thank all the contributors of these repositories.
@@ -128,10 +132,6 @@ If you find this work helpful, please consider citing it with the BibTeX below a
   year={2026}
 }
 ```
-
-## TODO
-
-We will add implementations for other models (e.g., Qwen2.5-VL).
 
 ## License
 
