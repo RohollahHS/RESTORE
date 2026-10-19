@@ -18,6 +18,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """ PyTorch LLaMA model."""
+import os
 import math
 import warnings
 from typing import List, Optional, Tuple, Union, Callable, Dict, Any
@@ -1139,6 +1140,7 @@ class LlamaModel(LlamaPreTrainedModel):
         
         next_decoder_cache = None
 
+        self.n_vis = int(os.getenv("N_VIS"))
 
         is_restore = getattr(self, 'restore', False)
         if hidden_states.shape[1] != 1: # prefill of each sample in the batch
