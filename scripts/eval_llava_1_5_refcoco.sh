@@ -74,7 +74,6 @@ module load java
 source ${VENVS_DIR}/voco/bin/activate
 
 K="64"
-KMIN="1"
 TASKS=refcoco,refcoco+,refcocog
 OPTIONAL_ARGS=""
 
@@ -82,10 +81,6 @@ while [[ $# -gt 0 ]]; do
   case $1 in
     --k)
       K="$2"
-      shift 2
-      ;;
-    --km|--kmin)
-      KMIN="$2"
       shift 2
       ;;
     --t|--tasks)
@@ -114,7 +109,7 @@ PORT="${PORT:-29641}"
 MODEL="${HF_HUB}/llava-v1.5-7b"
 OUT_ROOT=/scratch/rohhs/projects/voco_llava/RESTORE
 
-OUT="${OUT_ROOT}/${TASKS}/k${K}_kmin${KMIN}"
+OUT="${OUT_ROOT}/${TASKS}/k${K}}"
 
 export BBOX_COORD_FORMAT=normalized
 export REFCOCO_PROMPT_STYLE=full
@@ -124,15 +119,11 @@ export PYTHONPATH="${REPO_ROOT}/tokenreduction:${LMMS_ROOT}:${PYTHONPATH:-}"
 
 MODEL_ARGS_LIST=(
   "pretrained=${MODEL}"
-  "attn_implementation=sdpa"
   "use_cache=true"
-  "prune=true"
-  "prune_k_total=${K}"
-  "prune_anchor_k=${KMIN}"
 )
 MODEL_ARGS="$(IFS=,; echo "${MODEL_ARGS_LIST[*]}")"
 
-echo "[RESTORE] LLaVA-1.5-7B | tasks=${TASKS} | K=${K} | KMIN=${KMIN} | output=${OUT}"
+echo "[RESTORE] LLaVA-1.5-7B | tasks=${TASKS} | K=${K} | output=${OUT}"
 cd "${LMMS_ROOT}"
 
 OUTPUT_DIR=${SCRATCH}/projects/voco_llava
@@ -145,7 +136,7 @@ export HF_HUB_OFFLINE=1
 export HF_DATASETS_OFFLINE=1
 export LMMS_EVAL_DATASETS_CACHE="/scratch/rohhs/huggingface/datasets"
 
-export QA_ID="RESTORE_llava_k${K}_kmin${KMIN}_refcoco_refcocoplus_refcocog_pixel_nuwa"
+export QA_ID="RESTORE_llava_k${K}_refcoco_refcocoplus_refcocog_pixel_nuwa"
 
 NUM_MACHINES=${SLURM_NNODES}
 NUM_PROCESSES=$((GPUS_PER_NODE * NUM_MACHINES))
@@ -170,33 +161,29 @@ accelerate launch --num_processes=${GPUS_PER_NODE} -m lmms_eval \
 ################ SBATCH
 # cat scripts/headers/${HEADER}.sh scripts/eval_llava_1_5_refcoco.sh > myjob.sh
 # k=128
-# kmin=20
-# sbatch --nodes=2 --job-name=${HEADER}_RESTORE_k${k}_kmin${kmin} --time=12:00:00 myjob.sh --k $k --kmin $kmin
+# sbatch --nodes=2 --job-name=${HEADER}_RESTORE_k${k} --time=12:00:00 myjob.sh --k $k
 
 ###### cat scripts/headers/${HEADER}.sh scripts/eval_llava_1_5_refcoco.sh > myjob.sh
 ###### k=256
-###### kmin=40
-###### sbatch --nodes=2 --job-name=${HEADER}_RESTORE_k${k}_kmin${kmin} --time=12:00:00 myjob.sh --k $k --kmin $kmin
+###### sbatch --nodes=2 --job-name=${HEADER}_RESTORE_k${k} --time=12:00:00 myjob.sh --k $k
 
 # cat scripts/headers/${HEADER}.sh scripts/eval_llava_1_5_refcoco.sh > myjob.sh
 # k=512
-# kmin=80
-# sbatch --nodes=2 --job-name=${HEADER}_RESTORE_k${k}_kmin${kmin} --time=12:00:00 myjob.sh --k $k --kmin $kmin
+# sbatch --nodes=2 --job-name=${HEADER}_RESTORE_k${k} --time=12:00:00 myjob.sh --k $k
 
 ################ INTERACTIVE
 
-#### bash ${PROJECTS_DIR}/RESTORE/scripts/eval_llava_1_5_refcoco.sh --k 128 --kmin 20 --tasks refcoco 2>&1 | tee "$SLURM_OUTPUTS/RESTORE_llava_k128_kmin20_refcoco.log"
-#### bash ${PROJECTS_DIR}/RESTORE/scripts/eval_llava_1_5_refcoco.sh --k 128 --kmin 20 --tasks refcoco+ 2>&1 | tee "$SLURM_OUTPUTS/RESTORE_llava_k128_kmin20_refcoco+.log"
-# bash ${PROJECTS_DIR}/RESTORE/scripts/eval_llava_1_5_refcoco.sh --k 128 --kmin 20 --tasks refcocog 2>&1 | tee "$SLURM_OUTPUTS/RESTORE_llava_k128_kmin20_refcocog.log"
+#### bash ${PROJECTS_DIR}/RESTORE/scripts/eval_llava_1_5_refcoco.sh --k 128 --tasks refcoco 2>&1 | tee "$SLURM_OUTPUTS/RESTORE_llava_k128_refcoco.log"
+#### bash ${PROJECTS_DIR}/RESTORE/scripts/eval_llava_1_5_refcoco.sh --k 128 --tasks refcoco+ 2>&1 | tee "$SLURM_OUTPUTS/RESTORE_llava_k128_refcoco+.log"
+# bash ${PROJECTS_DIR}/RESTORE/scripts/eval_llava_1_5_refcoco.sh --k 128 --tasks refcocog 2>&1 | tee "$SLURM_OUTPUTS/RESTORE_llava_k128_refcocog.log"
 
-##### bash ${PROJECTS_DIR}/RESTORE/scripts/eval_llava_1_5_refcoco.sh --k 256 --kmin 40 2>&1 | tee "$SLURM_OUTPUTS/RESTORE_llava_k256_kmin40_refcoco,refcoco+,refcocog.log"
+##### bash ${PROJECTS_DIR}/RESTORE/scripts/eval_llava_1_5_refcoco.sh --k 256 2>&1 | tee "$SLURM_OUTPUTS/RESTORE_llava_k256_refcoco,refcoco+,refcocog.log"
 
-#### bash ${PROJECTS_DIR}/RESTORE/scripts/eval_llava_1_5_refcoco.sh --k 512 --kmin 80 --tasks refcoco 2>&1 | tee "$SLURM_OUTPUTS/RESTORE_llava_k512_kmin80_refcoco.log"
-#### bash ${PROJECTS_DIR}/RESTORE/scripts/eval_llava_1_5_refcoco.sh --k 512 --kmin 80 --tasks refcoco+ 2>&1 | tee "$SLURM_OUTPUTS/RESTORE_llava_k512_kmin80_refcoco+.log"
-#### bash ${PROJECTS_DIR}/RESTORE/scripts/eval_llava_1_5_refcoco.sh --k 512 --kmin 80 --tasks refcocog 2>&1 | tee "$SLURM_OUTPUTS/RESTORE_llava_k512_kmin80_refcocog.log"
+#### bash ${PROJECTS_DIR}/RESTORE/scripts/eval_llava_1_5_refcoco.sh --k 512 --tasks refcoco 2>&1 | tee "$SLURM_OUTPUTS/RESTORE_llava_k512_refcoco.log"
+#### bash ${PROJECTS_DIR}/RESTORE/scripts/eval_llava_1_5_refcoco.sh --k 512 --tasks refcoco+ 2>&1 | tee "$SLURM_OUTPUTS/RESTORE_llava_k512_refcoco+.log"
+#### bash ${PROJECTS_DIR}/RESTORE/scripts/eval_llava_1_5_refcoco.sh --k 512 --tasks refcocog 2>&1 | tee "$SLURM_OUTPUTS/RESTORE_llava_k512_refcocog.log"
 
 ######################
 
 # k=512
-# kmin=80
-# bash ${PROJECTS_DIR}/RESTORE/recursive_interactive_eval.sh --k $k --kmin $kmin
+# bash ${PROJECTS_DIR}/RESTORE/recursive_interactive_eval.sh --k $k

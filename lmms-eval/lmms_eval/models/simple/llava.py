@@ -140,15 +140,6 @@ class Llava(lmms):
         tie_weights: bool = True,
         truncate_context=False,
         customized_config=None,  # ends in json
-        prune: bool = False,
-        prune_k_total: int = 32,
-        prune_anchor_k: int = 5,
-        prune_adaptive_rel: Optional[bool] = None,
-        prune_tau: Optional[float] = None,
-        prune_patience: Optional[int] = None,
-        prune_patience_mode: Optional[str] = None,
-        prune_kmin_abs: Optional[int] = None,
-        prune_kmax_ratio: Optional[float] = None,
         **kwargs,
     ) -> None:
         super().__init__()
@@ -211,19 +202,6 @@ class Llava(lmms):
         )
 
         self._config = self._model.config
-        # patch_llava_model_for_pruning(self.model)
-        # self._config.llava_prune_enable = _to_bool(prune)
-        anchor_k = max(1, int(prune_kmin_abs if prune_kmin_abs is not None else prune_anchor_k))
-        self._config.llava_prune_k_total = int(prune_k_total)
-        self._config.llava_prune_anchor_k = anchor_k
-        self._config.llava_prune_kmin_abs = anchor_k
-        self._config.llava_prune_layer_idx = -2
-        self._config.llava_prune_tau = 0.20 if prune_tau is None else float(prune_tau)
-        self._config.llava_prune_patience = 3 if prune_patience is None else int(prune_patience)
-        self._config.llava_prune_patience_mode = "cumulative" if prune_patience_mode is None else str(prune_patience_mode)
-        self._config.llava_prune_kmax_ratio = 0.5 if prune_kmax_ratio is None else float(prune_kmax_ratio)
-        self._config.llava_prune_adaptive_rel = True if prune_adaptive_rel is None else _to_bool(prune_adaptive_rel)
-        self._config.llava_prune_query_text = ""
         self.model.eval()
         if tie_weights:
             self.model.tie_weights()
@@ -387,8 +365,6 @@ class Llava(lmms):
             labels = input_ids.clone()
             # Context part no need to calculate for loss
             labels[0, : contxt_id.shape[1]] = -100
-            if bool(getattr(self._config, "llava_prune_enable", False)):
-                self._config.llava_prune_query_text = prompts_input
 
             with torch.inference_mode():
                 outputs = self.model(input_ids=input_ids, labels=labels, images=image, use_cache=True, image_sizes=image_sizes)
@@ -530,11 +506,6 @@ class Llava(lmms):
                 gen_kwargs["top_p"] = None
             if "num_beams" not in gen_kwargs:
                 gen_kwargs["num_beams"] = 1
-
-            # if bool(getattr(self._config, "llava_prune_enable", False)):
-            #     if len(contexts) != 1:
-            #         raise ValueError("AnchorPrune requires batch_size=1 during generation to associate each visual input with its corresponding query-specific relevance signal.")
-            #     self._config.llava_prune_query_text = contexts[0]
 
             input_ids_list = [tokenizer_image_token(prompt, self.tokenizer, IMAGE_TOKEN_INDEX, return_tensors="pt") for prompt in question_input]
             pad_token_ids = self.tokenizer.pad_token_id if self.tokenizer.pad_token_id is not None else self.tokenizer.eos_token_id

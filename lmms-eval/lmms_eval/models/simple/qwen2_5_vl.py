@@ -31,13 +31,6 @@ process_vision_info, _has_qwen_vl = optional_import("qwen_vl_utils", "process_vi
 if not _has_qwen_vl:
     eval_logger.warning("Failed to import qwen_vl_utils; Please install it via `pip install qwen-vl-utils`")
 
-
-# from anchorprune.qwen import (
-#     _extract_task_query,
-#     _to_bool,
-#     patch_qwen_model_for_pruning,
-# )
-
 try:
     from qwen.tore import load_reduction_base
 except:
@@ -65,9 +58,6 @@ class Qwen2_5_VL(lmms):
         system_prompt: Optional[str] = "You are a helpful assistant.",
         interleave_visuals: Optional[bool] = False,
         reasoning_prompt: Optional[str] = None,
-        prune: bool = False,
-        prune_k_total: int = 0,
-        prune_anchor_k: int = 5,
         **kwargs,
     ) -> None:
         super().__init__()
@@ -133,24 +123,6 @@ class Qwen2_5_VL(lmms):
         self.interleave_visuals = interleave_visuals
 
         self._config = self.model.config
-        # self._config.qwen_prune_enable = _to_bool(prune)
-        self._config.qwen_prune_k_total = int(prune_k_total)
-        self._config.qwen_prune_k_rel = -1
-        self._config.qwen_prune_sim_agg = "max"
-        self._config.qwen_prune_adaptive_rel = True
-        self._config.qwen_prune_tau = 0.2
-        self._config.qwen_prune_patience = 3
-        self._config.qwen_prune_patience_mode = "cumulative"
-        self._config.qwen_prune_anchor_k = int(prune_anchor_k)
-        self._config.qwen_prune_kmin_abs = max(1, int(prune_anchor_k))
-        self._config.qwen_prune_kmax_ratio = 0.5
-        self._config.qwen_prune_stage2_use_attn_mass = True
-        self._config.qwen_prune_stage2_merge = "mean"
-        self._config.qwen_prune_stage2_layer = -1
-        self._config.qwen_prune_stage2_l1_norm = False
-        self._config.qwen_prune_stage2_minmax_norm = False
-        self._config.qwen_prune_query_text = ""
-        patch_qwen_model_for_pruning(self)
 
         self._max_length = kwargs.get("max_length", 2048)
         self.batch_size_per_gpu = int(batch_size)
@@ -224,80 +196,6 @@ class Qwen2_5_VL(lmms):
             for j in i:
                 new_list.append(j)
         return new_list
-
-    def _compact_image_placeholders(self, inputs, keep_counts):
-        if keep_counts is None:
-            return inputs
-        if "input_ids" not in inputs or "attention_mask" not in inputs:
-            return inputs
-
-        input_ids = inputs["input_ids"]
-        attention_mask = inputs["attention_mask"]
-        bsz = input_ids.shape[0]
-        image_token_id = self.model.config.image_token_id
-        pad_token_id = self.tokenizer.pad_token_id if self.tokenizer.pad_token_id is not None else 0
-
-        new_ids_list, new_attn_list = [], []
-        max_len = 0
-        full_counts = getattr(self._config, "qwen_prune_last_full_tokens_batch", None)
-        if full_counts is None:
-            full_counts = []
-        full_counts = [int(x) for x in full_counts]
-        keep_counts_i = [int(x) for x in keep_counts]
-        img_ptr = 0
-
-        for b in range(bsz):
-            ids_b = input_ids[b]
-            attn_b = attention_mask[b]
-            img_pos = (ids_b == image_token_id).nonzero(as_tuple=False).flatten()
-            n_placeholders = int(img_pos.numel())
-
-            k_keep = 0
-            consumed_full = 0
-            start_ptr = img_ptr
-            while img_ptr < len(full_counts) and consumed_full < n_placeholders:
-                fc = int(full_counts[img_ptr])
-                kc = int(keep_counts_i[img_ptr]) if img_ptr < len(keep_counts_i) else fc
-                fc = max(0, fc)
-                kc = max(0, kc)
-                if consumed_full > 0 and (consumed_full + fc) > n_placeholders:
-                    break
-                consumed_full += fc
-                k_keep += kc
-                img_ptr += 1
-
-            if img_ptr == start_ptr:
-                k_keep = int(keep_counts_i[b]) if b < len(keep_counts_i) else n_placeholders
-
-            k_keep = max(0, min(k_keep, n_placeholders))
-
-            if k_keep < n_placeholders:
-                drop_pos = img_pos[k_keep:]
-                keep_mask = torch.ones_like(ids_b, dtype=torch.bool)
-                keep_mask[drop_pos] = False
-                ids_new = ids_b[keep_mask]
-                attn_new = attn_b[keep_mask]
-            else:
-                ids_new = ids_b
-                attn_new = attn_b
-
-            new_ids_list.append(ids_new)
-            new_attn_list.append(attn_new)
-            max_len = max(max_len, int(ids_new.shape[0]))
-
-        out_ids = torch.full((bsz, max_len), fill_value=pad_token_id, dtype=input_ids.dtype, device=input_ids.device)
-        out_attn = torch.zeros((bsz, max_len), dtype=attention_mask.dtype, device=attention_mask.device)
-        for b in range(bsz):
-            L = int(new_ids_list[b].shape[0])
-            out_ids[b, :L] = new_ids_list[b]
-            out_attn[b, :L] = new_attn_list[b]
-
-        inputs["input_ids"] = out_ids
-        inputs["attention_mask"] = out_attn
-        for stale_key in ("position_ids", "cache_position", "token_type_ids", "mm_token_type_ids"):
-            if stale_key in inputs:
-                inputs.pop(stale_key)
-        return inputs
 
     def _encode_image_data_url(self, image: Image.Image) -> str:
         return encode_image_to_data_url(
@@ -448,25 +346,6 @@ class Qwen2_5_VL(lmms):
                 inputs = inputs.to("cuda")
             else:
                 inputs = inputs.to(self.device)
-            qtxt = _extract_task_query(
-                contexts=contexts,
-                batched_messages=batched_messages,
-                task_dict=self.task_dict,
-                task=task,
-                split=split,
-                doc_id=doc_id,
-            )
-            self._config.qwen_prune_query_text = qtxt
-            self.model.config.qwen_prune_query_text = qtxt
-
-            if bool(getattr(self._config, "qwen_prune_enable", False)):
-                with torch.no_grad():
-                    _ = self.model.get_image_features(
-                        pixel_values=inputs["pixel_values"],
-                        image_grid_thw=inputs["image_grid_thw"],
-                    )
-                keep_counts = getattr(self._config, "qwen_prune_last_selected_tokens_batch", None)
-                inputs = self._compact_image_placeholders(inputs, keep_counts)
 
             # Set default generation kwargs
             default_gen_kwargs = {
@@ -683,25 +562,6 @@ class Qwen2_5_VL(lmms):
                     inputs = inputs.to("cuda")
                 else:
                     inputs = inputs.to(self.device)
-                qtxt = _extract_task_query(
-                    contexts=contexts,
-                    batched_messages=batched_messages,
-                    task_dict=self.task_dict,
-                    task=task,
-                    split=split,
-                    doc_id=batched_doc_id,
-                )
-                self._config.qwen_prune_query_text = qtxt
-                self.model.config.qwen_prune_query_text = qtxt
-
-                if bool(getattr(self._config, "qwen_prune_enable", False)):
-                    with torch.no_grad():
-                        _ = self.model.get_image_features(
-                            pixel_values=inputs["pixel_values"],
-                            image_grid_thw=inputs["image_grid_thw"],
-                        )
-                    keep_counts = getattr(self._config, "qwen_prune_last_selected_tokens_batch", None)
-                    inputs = self._compact_image_placeholders(inputs, keep_counts)
 
                 default_gen_kwargs = {
                     "max_new_tokens": 32768,
