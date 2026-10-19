@@ -71,7 +71,7 @@ module purge all
 module load StdEnv/2023 gcc/12.3
 module load cuda/12.6
 module load java
-source ${VENVS_DIR}/qwen/bin/activate
+source ${VENVS_DIR}/restore_qwen/bin/activate
 
 K="64"
 TASKS=refcoco,refcoco+,refcocog

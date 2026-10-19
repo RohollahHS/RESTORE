@@ -31,9 +31,7 @@ import torch.nn.functional as F
 from torch.nn import CrossEntropyLoss
 
 from transformers.activations import ACT2FN
-from transformers.cache_utils import Cache, DynamicCache
-SlidingWindowCache = StaticCache = None
-# from transformers.cache_utils import Cache, DynamicCache, SlidingWindowCache, StaticCache
+from transformers.cache_utils import Cache, DynamicCache, SlidingWindowCache, StaticCache
 from transformers.generation import GenerationMixin
 from transformers.modeling_attn_mask_utils import AttentionMaskConverter
 from transformers.modeling_flash_attention_utils import flash_attn_supports_top_left_mask, is_flash_attn_available
@@ -1144,8 +1142,6 @@ class Qwen2_5_VLDecoderLayer(nn.Module):
 class Qwen2_5_VLModel(Qwen2_5_VLPreTrainedModel):
     def __init__(self, config: Qwen2_5_VLConfig):
         super().__init__(config)
-        config.pad_token_id = 151643
-        config.vocab_size = 152064
         self.padding_idx = config.pad_token_id
         self.vocab_size = config.vocab_size
 
@@ -1560,9 +1556,8 @@ class Qwen2_5_VLForConditionalGeneration(Qwen2_5_VLPreTrainedModel, GenerationMi
 
     def __init__(self, config):
         super().__init__(config)
-        print(config)
         self.visual = Qwen2_5_VisionTransformerPretrainedModel._from_config(config.vision_config)
-        self.model = Qwen2_5_VLModel(config.text_config)
+        self.model = Qwen2_5_VLModel(config)
         self.vocab_size = config.vocab_size
         self.lm_head = nn.Linear(config.hidden_size, config.vocab_size, bias=False)
         self.rope_deltas = None  # cache rope_deltas here
