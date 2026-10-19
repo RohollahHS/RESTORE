@@ -1,0 +1,10 @@
+#!/bin/bash
+#SBATCH --job-name=nibi
+#SBATCH --output=/scratch/rohhs/projects/slurm_outputs/%j_%x.out
+#SBATCH --nodes=1
+#SBATCH --mem=256G
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=64
+#SBATCH --time=12:00:00
+#SBATCH --mail-user=rohollah903@gmail.com
+#SBATCH --mail-type=ALL

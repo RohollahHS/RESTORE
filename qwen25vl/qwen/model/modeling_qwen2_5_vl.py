@@ -1547,6 +1547,7 @@ QWEN2_5_VL_INPUTS_DOCSTRING = r"""
             The rope index difference between sequence length and multimodal rope.
 """
 
+LOG = True
 
 class Qwen2_5_VLForConditionalGeneration(Qwen2_5_VLPreTrainedModel, GenerationMixin):
     _tied_weights_keys = ["lm_head.weight"]
@@ -1820,6 +1821,15 @@ class Qwen2_5_VLForConditionalGeneration(Qwen2_5_VLPreTrainedModel, GenerationMi
         >>> tokenizer.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
         "The image shows a street scene with a red stop sign in the foreground. In the background, there is a large red gate with Chinese characters ..."
         ```"""
+
+        global LOG
+        if LOG:
+            print(
+                f"{50*'='}\n"
+                f"RESTORE FOR QWEN\n"
+                f"{50*'='}\n"
+            )
+            LOG = False
 
         output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
         output_hidden_states = (

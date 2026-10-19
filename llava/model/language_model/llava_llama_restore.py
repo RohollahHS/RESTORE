@@ -158,6 +158,8 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
             inputs['image_sizes'] = image_sizes
         return inputs
 
+LOG = True
+
 class LlavaLlamaForCausalLM_restore(LlavaLlamaForCausalLM):
     def forward(
         self,
@@ -174,6 +176,15 @@ class LlavaLlamaForCausalLM_restore(LlavaLlamaForCausalLM):
         image_sizes: Optional[List[List[int]]] = None,
         return_dict: Optional[bool] = None,
     ) -> Union[Tuple, CausalLMOutputWithPast]:
+        
+        global LOG
+        if LOG:
+            print(
+                f"{50*'='}\n"
+                f"LlavaLlamaForCausalLM_restore\n"
+                f"{50*'='}"
+            )
+            LOG = False
         
         if inputs_embeds is None:
             
