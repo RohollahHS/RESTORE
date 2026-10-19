@@ -98,7 +98,7 @@ class Qwen2_5_VL(lmms):
 
         self._model = Qwen2_5_VLForConditionalGeneration.from_pretrained(pretrained, **model_kwargs).eval()
 
-        retain_ratio = int(os.getenv("N_VIS", 64)) / 1240
+        retain_ratio = int(os.getenv("N_VIS", 64)) / 1296
         self._model = load_reduction_base(
             self._model,
             os.getenv("BASE", "HoloV"),
