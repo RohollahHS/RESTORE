@@ -1144,7 +1144,7 @@ class LlamaModel(LlamaPreTrainedModel):
         if hidden_states.shape[1] != 1: # prefill of each sample in the batch
             # =========== 0. Define some variables for RESTORE =========== #
             self.N_sys = 35
-            # self.N_vis : 576 for LLaVA-1.5
+            self.N_vis = 576 # for LLaVA-1.5
             # self.n_vis : {64, 128, 192}
             self.N_txt = seq_length + past_key_values_length - self.N_sys - self.n_vis
 
