@@ -1560,6 +1560,7 @@ class Qwen2_5_VLForConditionalGeneration(Qwen2_5_VLPreTrainedModel, GenerationMi
 
     def __init__(self, config):
         super().__init__(config)
+        print(config)
         self.visual = Qwen2_5_VisionTransformerPretrainedModel._from_config(config.vision_config)
         self.model = Qwen2_5_VLModel(config.text_config)
         self.vocab_size = config.vocab_size
