@@ -121,6 +121,7 @@ export REFCOCO_PROMPT_STYLE=nuwa
 
 export PYTHONPATH="${REPO_ROOT}:${LMMS_ROOT}:${PYTHONPATH:-}"
 export PYTHONPATH="${REPO_ROOT}/tokenreduction:${LMMS_ROOT}:${PYTHONPATH:-}"
+export PYTHONPATH="${REPO_ROOT}/transformers/src/transformers:${LMMS_ROOT}:${PYTHONPATH:-}"
 
 MODEL_ARGS_LIST=(
   "pretrained=${MODEL}"
