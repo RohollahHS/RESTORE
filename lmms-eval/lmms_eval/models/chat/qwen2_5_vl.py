@@ -23,17 +23,11 @@ from lmms_eval.api.registry import register_model
 from lmms_eval.imports import optional_import
 from lmms_eval.models.model_utils.gen_metrics import log_metrics
 from lmms_eval.models.simple.qwen2_5_vl import Qwen2_5_VL as Qwen2_5_VLSimple
-from lmms_eval.models.simple.qwen2_5_vl import _extract_task_query
 from lmms_eval.protocol import ChatMessages
 
 process_vision_info, _has_qwen_vl = optional_import("qwen_vl_utils", "process_vision_info")
 if not _has_qwen_vl:
     eval_logger.warning("Failed to import qwen_vl_utils; Please install it via `pip install qwen-vl-utils`")
-
-
-def _qwen_prune_verbose() -> bool:
-    v = os.environ.get("QWEN_PRUNE_VERBOSE", "0")
-    return str(v).strip().lower() in {"1", "true", "t", "yes", "y", "on"}
 
 
 def load_json_with_fallback(file_path):
@@ -239,27 +233,6 @@ class Qwen2_5_VL(Qwen2_5_VLSimple):
                 inputs = inputs.to("cuda")
             else:
                 inputs = inputs.to(self.device)
-
-            if bool(getattr(self._config, "qwen_prune_enable", False)):
-                qtxt = _extract_task_query(
-                    contexts=list(ctx),
-                    batched_messages=batched_messages,
-                    task_dict=self.task_dict,
-                    task=task[0] if len(task) > 0 else None,
-                    split=split[0] if len(split) > 0 else None,
-                    doc_id=doc_id,
-                )
-                self._config.qwen_prune_query_text = qtxt
-                self.model.config.qwen_prune_query_text = qtxt
-                with torch.no_grad():
-                    _ = self.model.get_image_features(
-                        pixel_values=inputs["pixel_values"],
-                        image_grid_thw=inputs["image_grid_thw"],
-                    )
-                keep_counts = getattr(self._config, "qwen_prune_last_selected_tokens_batch", None)
-                inputs = self._compact_image_placeholders(inputs, keep_counts)
-                if keep_counts is not None and self.rank == 0 and _qwen_prune_verbose():
-                    print(f"[QWEN_CHAT_PLACEHOLDER_COMPACT] keep_counts={keep_counts}", flush=True)
 
             # Set default generation kwargs
             default_gen_kwargs = {
