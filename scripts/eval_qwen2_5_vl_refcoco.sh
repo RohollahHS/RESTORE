@@ -121,7 +121,6 @@ export REFCOCO_PROMPT_STYLE=nuwa
 
 export PYTHONPATH="${REPO_ROOT}:${LMMS_ROOT}:${PYTHONPATH:-}"
 export PYTHONPATH="${REPO_ROOT}/tokenreduction:${LMMS_ROOT}:${PYTHONPATH:-}"
-export PYTHONPATH="${REPO_ROOT}/transformers/src/transformers:${LMMS_ROOT}:${PYTHONPATH:-}"
 
 MODEL_ARGS_LIST=(
   "pretrained=${MODEL}"
@@ -202,3 +201,6 @@ fi
 
 # k=512
 # bash ${PROJECTS_DIR}/RESTORE/recursive_interactive_eval.sh --k $k
+
+
+# pip install loguru datasets==4.5.0 tenacity evaluate sqlitedict sacrebleu pytest pytablewriter openpyxl==3.1.5 pycocoevalcap
