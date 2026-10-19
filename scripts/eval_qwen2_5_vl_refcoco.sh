@@ -158,6 +158,10 @@ MAIN_PROCESS_IP=$(scontrol show hostnames "$SLURM_NODELIST" | head -n 1)
 MAIN_PROCESS_PORT=29500
 MACHINE_RANK=${SLURM_NODEID}
 
+export BASE="HoloV"
+export N_VIS=$K
+export RESTORE=1
+
 accelerate launch --num_processes=${GPUS_PER_NODE} -m lmms_eval \
   --model qwen2_5_vl \
   --model_args ${MODEL_ARGS} \

@@ -108,12 +108,12 @@ class Qwen2_5_VL(lmms):
 
         self._model = Qwen2_5_VLForConditionalGeneration.from_pretrained(pretrained, **model_kwargs).eval()
 
-        retain_ratio = int(os.getenv("N_VIS")) / 1240
+        retain_ratio = int(os.getenv("N_VIS", 64)) / 1240
         self._model = load_reduction_base(
             self._model,
-            os.getenv("BASE"),
+            os.getenv("BASE", "HoloV"),
             retain_ratio,
-            bool(int(os.getenv("RESTORE"))),
+            bool(int(os.getenv("RESTORE", 1))),
         )
 
         self.max_pixels = max_pixels

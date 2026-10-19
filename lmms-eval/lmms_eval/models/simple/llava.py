@@ -205,9 +205,9 @@ class Llava(lmms):
 
         self._model = load_reduction_base(
             self._model,
-            os.getenv("BASE"),
-            int(os.getenv("N_VIS")),
-            bool(int(os.getenv("RESTORE"))),
+            os.getenv("BASE", "HoloV"),
+            int(os.getenv("N_VIS", 64)),
+            bool(int(os.getenv("RESTORE", 1))),
         )
 
         self._config = self._model.config
