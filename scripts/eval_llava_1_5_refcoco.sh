@@ -76,6 +76,7 @@ source ${VENVS_DIR}/voco/bin/activate
 K="64"
 TASKS=refcoco,refcoco+,refcocog
 OPTIONAL_ARGS=""
+CANCEL=0
 
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -89,6 +90,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --a|--args)
       OPTIONAL_ARGS="$2"
+      shift 2
+      ;;
+    --c|--cancel)
+      CANCEL="$2"
       shift 2
       ;;
     *)
@@ -157,6 +162,9 @@ accelerate launch --num_processes=${GPUS_PER_NODE} -m lmms_eval \
   --output_path ${SAVE_LOGS_DIR} \
   ${OPTIONAL_ARGS}
 
+if (( CANCEL == 1 )); then
+  scancel $SLURM_JOB_ID
+fi
 
 ################ SBATCH
 # cat scripts/headers/${HEADER}.sh scripts/eval_llava_1_5_refcoco.sh > myjob.sh
@@ -173,15 +181,17 @@ accelerate launch --num_processes=${GPUS_PER_NODE} -m lmms_eval \
 
 ################ INTERACTIVE
 
-#### bash ${PROJECTS_DIR}/RESTORE/scripts/eval_llava_1_5_refcoco.sh --k 128 --tasks refcoco 2>&1 | tee "$SLURM_OUTPUTS/RESTORE_llava_k128_refcoco.log"
-#### bash ${PROJECTS_DIR}/RESTORE/scripts/eval_llava_1_5_refcoco.sh --k 128 --tasks refcoco+ 2>&1 | tee "$SLURM_OUTPUTS/RESTORE_llava_k128_refcoco+.log"
-# bash ${PROJECTS_DIR}/RESTORE/scripts/eval_llava_1_5_refcoco.sh --k 128 --tasks refcocog 2>&1 | tee "$SLURM_OUTPUTS/RESTORE_llava_k128_refcocog.log"
+# bash ${PROJECTS_DIR}/RESTORE/scripts/eval_llava_1_5_refcoco.sh --k 64 --c 1 --tasks refcoco  2>&1 | tee "$SLURM_OUTPUTS/RESTORE_llava_k64_refcoco.log"
+# bash ${PROJECTS_DIR}/RESTORE/scripts/eval_llava_1_5_refcoco.sh --k 64 --c 1 --tasks refcoco+ 2>&1 | tee "$SLURM_OUTPUTS/RESTORE_llava_k64_refcoco+.log"
+# bash ${PROJECTS_DIR}/RESTORE/scripts/eval_llava_1_5_refcoco.sh --k 64 --c 1 --tasks refcocog 2>&1 | tee "$SLURM_OUTPUTS/RESTORE_llava_k64_refcocog.log"
 
-##### bash ${PROJECTS_DIR}/RESTORE/scripts/eval_llava_1_5_refcoco.sh --k 256 2>&1 | tee "$SLURM_OUTPUTS/RESTORE_llava_k256_refcoco,refcoco+,refcocog.log"
+# bash ${PROJECTS_DIR}/RESTORE/scripts/eval_llava_1_5_refcoco.sh --k 128 --c 1 --tasks refcoco  2>&1 | tee "$SLURM_OUTPUTS/RESTORE_llava_k128_refcoco.log"
+# bash ${PROJECTS_DIR}/RESTORE/scripts/eval_llava_1_5_refcoco.sh --k 128 --c 1 --tasks refcoco+ 2>&1 | tee "$SLURM_OUTPUTS/RESTORE_llava_k128_refcoco+.log"
+# bash ${PROJECTS_DIR}/RESTORE/scripts/eval_llava_1_5_refcoco.sh --k 128 --c 1 --tasks refcocog 2>&1 | tee "$SLURM_OUTPUTS/RESTORE_llava_k128_refcocog.log"
 
-#### bash ${PROJECTS_DIR}/RESTORE/scripts/eval_llava_1_5_refcoco.sh --k 512 --tasks refcoco 2>&1 | tee "$SLURM_OUTPUTS/RESTORE_llava_k512_refcoco.log"
-#### bash ${PROJECTS_DIR}/RESTORE/scripts/eval_llava_1_5_refcoco.sh --k 512 --tasks refcoco+ 2>&1 | tee "$SLURM_OUTPUTS/RESTORE_llava_k512_refcoco+.log"
-#### bash ${PROJECTS_DIR}/RESTORE/scripts/eval_llava_1_5_refcoco.sh --k 512 --tasks refcocog 2>&1 | tee "$SLURM_OUTPUTS/RESTORE_llava_k512_refcocog.log"
+# bash ${PROJECTS_DIR}/RESTORE/scripts/eval_llava_1_5_refcoco.sh --k 256 --c 1 --tasks refcoco  2>&1 | tee "$SLURM_OUTPUTS/RESTORE_llava_k256_refcoco.log"
+# bash ${PROJECTS_DIR}/RESTORE/scripts/eval_llava_1_5_refcoco.sh --k 256 --c 1 --tasks refcoco+ 2>&1 | tee "$SLURM_OUTPUTS/RESTORE_llava_k256_refcoco+.log"
+# bash ${PROJECTS_DIR}/RESTORE/scripts/eval_llava_1_5_refcoco.sh --k 256 --c 1 --tasks refcocog 2>&1 | tee "$SLURM_OUTPUTS/RESTORE_llava_k256_refcocog.log"
 
 ######################
 

@@ -170,16 +170,13 @@ fi
 
 ################ SBATCH
 # cat scripts/headers/${HEADER}.sh scripts/eval_qwen2_5_vl_refcoco.sh > myjob.sh
-# k=128
-# sbatch --nodes=2 --job-name=${HEADER}_RESTORE_k${k} --time=12:00:00 myjob.sh --k $k
+# sbatch --nodes=2 --job-name=${HEADER}_RESTORE_k128 --time=12:00:00 myjob.sh --k $k
 
 # cat scripts/headers/${HEADER}.sh scripts/eval_qwen2_5_vl_refcoco.sh > myjob.sh
-# k=256
-# sbatch --nodes=2 --job-name=${HEADER}_RESTORE_k${k} --time=12:00:00 myjob.sh --k $k
+# sbatch --nodes=2 --job-name=${HEADER}_RESTORE_k256 --time=12:00:00 myjob.sh --k $k
 
 # cat scripts/headers/${HEADER}.sh scripts/eval_qwen2_5_vl_refcoco.sh > myjob.sh
-# k=512
-# sbatch --nodes=2 --job-name=${HEADER}_RESTORE_k${k} --time=12:00:00 myjob.sh --k $k
+# sbatch --nodes=2 --job-name=${HEADER}_RESTORE_k512 --time=12:00:00 myjob.sh --k $k
 
 ################ INTERACTIVE
 
