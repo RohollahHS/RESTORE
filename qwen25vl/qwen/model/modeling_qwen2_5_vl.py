@@ -1144,7 +1144,9 @@ class Qwen2_5_VLDecoderLayer(nn.Module):
 class Qwen2_5_VLModel(Qwen2_5_VLPreTrainedModel):
     def __init__(self, config: Qwen2_5_VLConfig):
         super().__init__(config)
-        self.padding_idx = 151643
+        config.pad_token_id = 151643
+        config.vocab_size = 152064
+        self.padding_idx = config.pad_token_id
         self.vocab_size = config.vocab_size
 
         self.embed_tokens = nn.Embedding(config.vocab_size, config.hidden_size, self.padding_idx)
